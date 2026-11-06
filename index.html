@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>أنجز مهمتك باليوم</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Cairo & Tajawal -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emeraldPrimary: '#059669',
+                        emeraldDark: '#047857',
+                        emeraldLight: '#10b981',
+                        accentGold: '#f59e0b',
+                        iosBg: '#0f172a',
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        tajawal: ['Tajawal', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0b1329;
+            color: #f8fafc;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.8);
+        }
+
+        /* Phone frame styling */
+        .phone-mockup {
+            width: 100%;
+            max-width: 420px;
+            height: 860px;
+            max-height: 94vh;
+            border-radius: 48px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 12px #1e293b, 0 0 0 14px #334155;
+            position: relative;
+            overflow: hidden;
+            background: #0f172a;
+        }
+
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 28px;
+            background-color: #1e293b;
+            border-bottom-left-radius: 18px;
+            border-bottom-right-radius: 18px;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .camera-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #090d16;
+            border-radius: 50%;
+        }
+
+        .speaker-bar {
+            width: 40px;
+            height: 4px;
+            background-color: #090d16;
+            border-radius: 4px;
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .emerald-gradient-btn {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        .emerald-gradient-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Pulse Animations */
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-4 bg-slate-950 overflow-x-hidden">
+
+    <!-- View Mode Selector Toggle for Desktop -->
+    <div class="fixed top-3 left-3 z-50 hidden sm:flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-700/50 text-xs">
+        <span class="text-slate-400">نمط العرض:</span>
+        <button onclick="toggleMockupMode(true)" id="btnViewPhone" class="px-2.5 py-1 rounded-full bg-emerald-600 text-white font-medium transition">إطار إيفون</button>
+        <button onclick="toggleMockupMode(false)" id="btnViewFull" class="px-2.5 py-1 rounded-full text-slate-300 hover:text-white transition">ملء الشاشة</button>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="appContainer" class="phone-mockup flex flex-col transition-all duration-300">
+        
+        <!-- iPhone Notch & Status Bar -->
+        <div id="phoneHeaderNav" class="phone-notch">
+            <div class="camera-dot"></div>
+            <div class="speaker-bar"></div>
+        </div>
+
+        <!-- System Time & Battery Simulation Bar -->
+        <div class="pt-8 px-6 pb-2 flex justify-between items-center text-xs font-semibold text-slate-400 select-none z-40">
+            <span id="liveClock">09:41</span>
+            <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-wifi text-[10px]"></i>
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <i class="fa-solid fa-battery-full text-xs text-emerald-400"></i>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT CANVAS -->
+        <div class="flex-1 flex flex-col overflow-hidden relative">
+
+            <!-- ========================================== -->
+            <!-- SCREEN 1: LOGIN / REGISTER AUTHENTICATION -->
+            <!-- ========================================== -->
+            <div id="authScreen" class="absolute inset-0 z-30 flex flex-col bg-slate-900 p-6 overflow-y-auto">
+                <div class="my-auto flex flex-col justify-center items-center text-center">
+                    
+                    <!-- App Logo & Title -->
+                    <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-900/40 mb-4 animate-pulse-subtle">
+                        <i class="fa-solid fa-circle-check text-4xl text-white"></i>
+                    </div>
+                    <h1 class="text-2xl font-black text-white mb-1">أنجز مهمتك باليوم</h1>
+                    <p class="text-xs text-slate-400 mb-8 font-tajawal">منصة متابعة وإنجاز الطاعات والمهام اليومية مع مجموعتك</p>
+
+                    <!-- Auth Form Card -->
+                    <div class="w-full glass-panel p-5 rounded-2xl shadow-xl border border-slate-800 text-right">
+                        
+                        <!-- Step Indicator -->
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-800/80 text-xs text-slate-400">
+                            <span id="authStepTitle" class="font-bold text-emerald-400">الخطوة 1: أدخل رقم الجوال</span>
+                            <span id="authStepBadge" class="px-2 py-0.5 rounded-full bg-slate-950 text-[10px] border border-slate-800">1 من 2</span>
+                        </div>
+
+                        <!-- Step 1 Form: Phone & Info -->
+                        <form id="stepPhoneForm" onsubmit="handleSendOTP(event)" class="space-y-4">
+                            
+                            <!-- Mode Toggle -->
+                            <div class="flex bg-slate-950/60 p-1 rounded-xl mb-3">
+                                <button type="button" onclick="setAuthTab('login')" id="tabLogin" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white transition-all">تسجيل الدخول</button>
+                                <button type="button" onclick="setAuthTab('register')" id="tabRegister" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 transition-all">حساب جديد</button>
+                            </div>
+
+                            <!-- Name Field (Visible only on registration) -->
+                            <div id="fieldNameGroup" class="hidden space-y-1">
+                                <label class="text-xs font-semibold text-slate-300">الاسم الكامل</label>
+                                <div class="relative">
+                                    <i class="fa-solid fa-user absolute right-3.5 top-3 text-slate-500 text-xs"></i>
+                                    <input type="text" id="authName" placeholder="مثال: عبد الله أحمد" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pr-9 pl-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500">
+                                </div>
+                            </div>
+
+                            <!-- Phone Number Field -->
+                            <div class="space-y-1">
+                                <label class="text-xs font-semibold text-slate-300">رقم الجوال</label>
+                                <div class="relative">
+                                    <i class="fa-solid fa-phone absolute right-3.5 top-3 text-slate-500 text-xs"></i>
+                                    <input type="tel" id="authPhone" required placeholder="05xxxxxxxx" dir="ltr" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pr-9 pl-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 text-right">
+                                </div>
+                            </div>
+
+                            <!-- Role Selection -->
+                            <div class="space-y-1 pt-1">
+                                <label class="text-xs font-semibold text-slate-300">صفة الحساب</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="authRole" value="member" checked class="peer hidden">
+                                        <div class="p-2 rounded-xl border border-slate-800 bg-slate-950/40 peer-checked:border-emerald-500 peer-checked:bg-emerald-950/30 text-center transition">
+                                            <i class="fa-solid fa-user-check text-emerald-400 block mb-1 text-xs"></i>
+                                            <span class="text-[11px] font-bold text-slate-300 block">عضو مجموعة</span>
+                                        </div>
+                                    </label>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="authRole" value="leader" class="peer hidden">
+                                        <div class="p-2 rounded-xl border border-slate-800 bg-slate-950/40 peer-checked:border-amber-500 peer-checked:bg-amber-950/30 text-center transition">
+                                            <i class="fa-solid fa-crown text-amber-400 block mb-1 text-xs"></i>
+                                            <span class="text-[11px] font-bold text-slate-300 block">قائد مجموعة</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Send Code Button -->
+                            <button type="submit" class="w-full py-2.5 mt-2 rounded-xl emerald-gradient-btn text-white text-xs font-extrabold flex items-center justify-center gap-2">
+                                <span>إرسال رمز التحقق</span>
+                                <i class="fa-solid fa-paper-plane text-xs"></i>
+                            </button>
+                        </form>
+
+                        <!-- Step 2 Form: Verification Code (OTP) Input -->
+                        <form id="stepOTPForm" onsubmit="handleVerifyOTP(event)" class="hidden space-y-4">
+                            <div class="text-center">
+                                <p class="text-xs text-slate-300">تم إرسال رمز التحقق إلى الرقم</p>
+                                <p id="displayTargetPhone" dir="ltr" class="text-xs font-bold text-emerald-400 my-1">05xxxxxxxx</p>
+                                <span class="text-[10px] text-amber-400 bg-amber-950/60 border border-amber-800 px-2 py-0.5 rounded-full inline-block">الرمز للتجربة: 1234</span>
+                            </div>
+
+                            <!-- 4-Digit Input Boxes -->
+                            <div class="flex justify-center gap-2 my-4" dir="ltr">
+                                <input type="text" maxlength="1" class="otp-input w-11 h-12 text-center text-lg font-bold bg-slate-950 border border-slate-700 rounded-xl text-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" oninput="handleOtpInput(this, 0)" onkeydown="handleOtpKeydown(event, 0)">
+                                <input type="text" maxlength="1" class="otp-input w-11 h-12 text-center text-lg font-bold bg-slate-950 border border-slate-700 rounded-xl text-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" oninput="handleOtpInput(this, 1)" onkeydown="handleOtpKeydown(event, 1)">
+                                <input type="text" maxlength="1" class="otp-input w-11 h-12 text-center text-lg font-bold bg-slate-950 border border-slate-700 rounded-xl text-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" oninput="handleOtpInput(this, 2)" onkeydown="handleOtpKeydown(event, 2)">
+                                <input type="text" maxlength="1" class="otp-input w-11 h-12 text-center text-lg font-bold bg-slate-950 border border-slate-700 rounded-xl text-emerald-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" oninput="handleOtpInput(this, 3)" onkeydown="handleOtpKeydown(event, 3)">
+                            </div>
+
+                            <p id="otpErrorMessage" class="text-[11px] text-rose-400 text-center hidden">رمز التحقق غير صحيح، يرجى كتابة 1234</p>
+
+                            <!-- Verify & Submit Button -->
+                            <button type="submit" class="w-full py-2.5 rounded-xl emerald-gradient-btn text-white text-xs font-extrabold flex items-center justify-center gap-2">
+                                <span>تأكيد وتسجيل الدخول</span>
+                                <i class="fa-solid fa-circle-check text-xs"></i>
+                            </button>
+
+                            <!-- Back & Resend Controls -->
+                            <div class="flex items-center justify-between text-[11px] pt-1">
+                                <button type="button" onclick="backToPhoneStep()" class="text-slate-400 hover:text-white flex items-center gap-1">
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i> تعديل الرقم
+                                </button>
+                                <button type="button" onclick="resendOTP()" id="btnResendOTP" class="text-emerald-400 hover:underline">
+                                    إعادة إرسال الرمز
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Demo Quick Login Buttons -->
+                    <div class="mt-6 w-full">
+                        <p class="text-[11px] text-slate-500 mb-2">تسجيل سريع لتجربة التطبيق:</p>
+                        <div class="flex gap-2">
+                            <button onclick="quickLogin('leader')" class="flex-1 py-1.5 bg-amber-950/40 border border-amber-800/40 rounded-lg text-[11px] text-amber-300 font-semibold hover:bg-amber-900/40">
+                                <i class="fa-solid fa-crown ml-1"></i> دخول كقائد
+                            </button>
+                            <button onclick="quickLogin('member')" class="flex-1 py-1.5 bg-emerald-950/40 border border-emerald-800/40 rounded-lg text-[11px] text-emerald-300 font-semibold hover:bg-emerald-900/40">
+                                <i class="fa-solid fa-user ml-1"></i> دخول كعضو
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- APP MAIN SCREEN (CONTAINER WITH TABS) -->
+            <!-- ========================================== -->
+            <div id="mainAppScreen" class="hidden flex-1 flex flex-col h-full overflow-hidden bg-slate-900">
+                
+                <!-- App Header -->
+                <header class="px-5 py-3 glass-panel border-b border-slate-800 flex items-center justify-between z-20">
+                    <div class="flex items-center gap-2.5">
+                        <div id="userAvatar" class="w-9 h-9 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-white text-xs border border-emerald-400/30">
+                            ع
+                        </div>
+                        <div class="text-right">
+                            <h2 id="headerUserName" class="text-xs font-bold text-white">عبد الله محمد</h2>
+                            <span id="headerUserRole" class="inline-block text-[10px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/50">عضو</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <!-- Score Display Chip -->
+                        <div class="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-full">
+                            <i class="fa-solid fa-star text-amber-400 text-xs"></i>
+                            <span id="headerPoints" class="text-xs font-black text-amber-300">0</span>
+                            <span class="text-[10px] text-amber-400/80">نقطة</span>
+                        </div>
+                        <!-- Logout Button -->
+                        <button onclick="logout()" title="تسجيل الخروج" class="w-7 h-7 rounded-full bg-slate-800 text-slate-400 hover:text-rose-400 flex items-center justify-center transition">
+                            <i class="fa-solid fa-power-off text-xs"></i>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- TAB CONTENT AREA -->
+                <main class="flex-1 overflow-y-auto p-4 pb-20 space-y-4" id="mainContentArea">
+                    
+                    <!-- TAB 1: DAILY TASKS CHECKLIST -->
+                    <section id="tabTasks" class="space-y-4">
+                        
+                        <!-- Daily Motivation Banner -->
+                        <div class="rounded-2xl bg-gradient-to-r from-emerald-900/60 to-slate-900 p-4 border border-emerald-700/30 relative overflow-hidden">
+                            <div class="relative z-10">
+                                <span class="text-[10px] font-bold tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800">مهام اليوم</span>
+                                <h3 class="text-sm font-bold text-white mt-1">"احرص على ما ينفعك واستعن بالله"</h3>
+                                <p class="text-[11px] text-slate-300 mt-1" id="taskProgressSummary">إنجازك اليوم: 0 من 7 مهام</p>
+                            </div>
+                            <!-- Progress Bar -->
+                            <div class="mt-3 w-full bg-slate-950/80 h-2 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                                <div id="dailyProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-300 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Tasks Filter Switcher -->
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-list-check text-emerald-400"></i>
+                                قائمة المهام اليومية
+                            </h3>
+                            <span class="text-[10px] text-slate-400" id="currentDateStr">اليوم</span>
+                        </div>
+
+                        <!-- Task Cards Container -->
+                        <div id="taskList" class="space-y-2.5">
+                            <!-- Injected dynamically via JavaScript -->
+                        </div>
+                    </section>
+
+                    <!-- TAB 2: LEADERBOARD -->
+                    <section id="tabLeaderboard" class="hidden space-y-4">
+                        
+                        <!-- Top 3 Podium Card -->
+                        <div class="glass-panel rounded-2xl p-4 border border-slate-800 text-center relative overflow-hidden">
+                            <h3 class="text-xs font-bold text-slate-200 mb-3 flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-trophy text-amber-400"></i>
+                                متصدرو قائمة الإنجاز
+                            </h3>
+                            <div id="podiumContainer" class="flex justify-center items-end gap-3 pt-2 pb-1">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- User's Personal Rank Card -->
+                        <div id="userRankBanner" class="p-3 bg-gradient-to-r from-amber-950/50 via-slate-900 to-slate-900 rounded-xl border border-amber-500/30 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div id="userRankBadge" class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 font-extrabold text-sm flex items-center justify-center border border-amber-500/40">
+                                    #--
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] text-amber-300 font-semibold block">ترتيبك الحالي بالمجموعة</span>
+                                    <h4 class="text-xs font-bold text-white">حافظ على صدارتك وإنجازك!</h4>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-award text-amber-400 text-xl"></i>
+                        </div>
+
+                        <!-- Full Group Members Ranking List -->
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-bold text-slate-400 px-1">جميع أعضاء المجموعة</h4>
+                            <div id="leaderboardList" class="space-y-2">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- TAB 3: LEADER DASHBOARD -->
+                    <section id="tabLeader" class="hidden space-y-4">
+                        
+                        <!-- Leader Welcome Banner -->
+                        <div class="p-3.5 rounded-2xl bg-gradient-to-r from-amber-900/40 to-slate-900 border border-amber-700/40 flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] font-bold text-amber-400 bg-amber-950 px-2 py-0.5 rounded-full border border-amber-800">إدارة المجموعة</span>
+                                <h3 class="text-xs font-bold text-white mt-1">لوحة تحكم قائد المجموعة</h3>
+                            </div>
+                            <button onclick="openAddTaskModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-plus"></i> مهمة جديدة
+                            </button>
+                        </div>
+
+                        <!-- Sub-Navigation for Leader Panel -->
+                        <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                            <button onclick="setLeaderSubTab('members')" id="subTabMembers" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white transition">الأعضاء والنقاط</button>
+                            <button onclick="setLeaderSubTab('tasks')" id="subTabTasks" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 transition">إدارة المهام</button>
+                        </div>
+
+                        <!-- Leader Content: Members List -->
+                        <div id="leaderMembersSection" class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-xs font-bold text-slate-300">أعضاء الفريق (<span id="membersCount">0</span>)</h4>
+                                <button onclick="openAddMemberModal()" class="text-xs text-emerald-400 hover:underline flex items-center gap-1">
+                                    <i class="fa-solid fa-user-plus"></i> إضافة عضو
+                                </button>
+                            </div>
+
+                            <div id="leaderMembersList" class="space-y-2">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Leader Content: Task Management -->
+                        <div id="leaderTasksSection" class="hidden space-y-3">
+                            <h4 class="text-xs font-bold text-slate-300">المهام المعتمدة للمجموعة</h4>
+                            <div id="leaderTasksList" class="space-y-2">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </div>
+
+                    </section>
+
+                </main>
+
+                <!-- BOTTOM NAVIGATION BAR -->
+                <nav class="absolute bottom-0 inset-x-0 h-16 glass-panel border-t border-slate-800/80 flex items-center justify-around px-2 z-30">
+                    <button onclick="switchTab('tasks')" id="navTasks" class="flex flex-col items-center gap-1 text-emerald-400 transition">
+                        <i class="fa-solid fa-calendar-check text-lg"></i>
+                        <span class="text-[10px] font-bold">مهامي</span>
+                    </button>
+                    <button onclick="switchTab('leaderboard')" id="navLeaderboard" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition">
+                        <i class="fa-solid fa-ranking-star text-lg"></i>
+                        <span class="text-[10px] font-bold">الترتيب</span>
+                    </button>
+                    <button onclick="switchTab('leader')" id="navLeader" class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition relative">
+                        <i class="fa-solid fa-user-gear text-lg"></i>
+                        <span class="text-[10px] font-bold">القائد</span>
+                        <span id="leaderNavBadge" class="absolute top-0 right-3 w-2 h-2 bg-amber-400 rounded-full hidden"></span>
+                    </button>
+                </nav>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODALS SECTION -->
+    <div id="modalAddTask" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 text-right shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-emerald-400"></i> إضافة مهمة جديدة
+                </h3>
+                <button onclick="closeModal('modalAddTask')" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleCreateTask(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">عنوان المهمة</label>
+                    <input type="text" id="newTaskTitle" required placeholder="مثال: قيام الليل" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">النقاط المكتسبة</label>
+                    <input type="number" id="newTaskPoints" required value="10" min="1" max="100" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">تعيين إلى</label>
+                    <select id="newTaskAssignee" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        <option value="all">جميع أعضاء المجموعة</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modalAddTask')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">إلغاء</button>
+                    <button type="submit" class="flex-1 py-2 rounded-xl emerald-gradient-btn text-white text-xs font-bold">حفظ المهمة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalEditTask" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 text-right shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-amber-400"></i> تعديل المهمة والنقاط
+                </h3>
+                <button onclick="closeModal('modalEditTask')" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleUpdateTask(event)" class="space-y-3">
+                <input type="hidden" id="editTaskId">
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">اسم المهمة</label>
+                    <input type="text" id="editTaskTitle" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">نقاط المهمة</label>
+                    <input type="number" id="editTaskPoints" required min="1" max="200" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modalEditTask')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">إلغاء</button>
+                    <button type="submit" class="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold">حفظ التعديلات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalAdjustPoints" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 text-right shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-emerald-400"></i> تعديل نقاط العضو
+                </h3>
+                <button onclick="closeModal('modalAdjustPoints')" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleAdjustMemberPoints(event)" class="space-y-3">
+                <input type="hidden" id="adjustMemberId">
+                <div class="bg-slate-950 p-3 rounded-xl text-center border border-slate-800">
+                    <span class="text-xs text-slate-400 block">العضو المستهدف</span>
+                    <span id="adjustMemberName" class="text-sm font-bold text-emerald-400">--</span>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">النقاط الحالية</label>
+                    <input type="number" id="adjustMemberCurrentPoints" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modalAdjustPoints')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">إلغاء</button>
+                    <button type="submit" class="flex-1 py-2 rounded-xl emerald-gradient-btn text-white text-xs font-bold">تحديث النقاط</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalAddMember" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 text-right shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-emerald-400"></i> إضافة عضو جديد للمجموعة
+                </h3>
+                <button onclick="closeModal('modalAddMember')" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleAddMemberSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">اسم العضو</label>
+                    <input type="text" id="newMemberName" required placeholder="مثال: خالد العتيبي" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">رقم الجوال</label>
+                    <input type="tel" id="newMemberPhone" required placeholder="05xxxxxxxx" dir="ltr" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 text-right">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300 block mb-1">النقاط الابتدائية</label>
+                    <input type="number" id="newMemberPoints" value="0" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modalAddMember')" class="flex-1 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">إلغاء</button>
+                    <button type="submit" class="flex-1 py-2 rounded-xl emerald-gradient-btn text-white text-xs font-bold">إضافة العضو</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const DEFAULT_TASKS = [
+            { id: 't1', title: 'أداء الصلوات الخمس في وقتها', points: 25, assignee: 'all', icon: 'fa-mosque' },
+            { id: 't2', title: 'قراءة 5 صفحات من القرآن', points: 15, assignee: 'all', icon: 'fa-book-quran' },
+            { id: 't3', title: 'المحافظة على أذكار الصباح', points: 10, assignee: 'all', icon: 'fa-sun' },
+            { id: 't4', title: 'المحافظة على أذكار المساء', points: 10, assignee: 'all', icon: 'fa-moon' },
+            { id: 't5', title: 'الاستغفار 100 مرة', points: 10, assignee: 'all', icon: 'fa-hands-praying' },
+            { id: 't6', title: 'الصلاة على النبي ﷺ (100 مرة)', points: 10, assignee: 'all', icon: 'fa-heart' },
+            { id: 't7', title: 'الدعاء للوالدين', points: 10, assignee: 'all', icon: 'fa-hands-holding-child' }
+        ];
+
+        const INITIAL_USERS = [
+            { id: 'u1', name: 'سلمان الحربي (القائد)', phone: '0501112223', role: 'leader', points: 140 },
+            { id: 'u2', name: 'عبد الله محمد', phone: '0500000000', role: 'member', points: 90 },
+            { id: 'u3', name: 'أحمد علي', phone: '0555555555', role: 'member', points: 110 },
+            { id: 'u4', name: 'عمر الفاروق', phone: '0566666666', role: 'member', points: 70 },
+            { id: 'u5', name: 'فهد التميمي', phone: '0577777777', role: 'member', points: 45 }
+        ];
+
+        let users = JSON.parse(localStorage.getItem('anjiz_users')) || INITIAL_USERS;
+        let tasks = JSON.parse(localStorage.getItem('anjiz_tasks')) || DEFAULT_TASKS;
+        let completions = JSON.parse(localStorage.getItem('anjiz_completions')) || {
+            'u2': ['t1', 't3', 't5']
+        };
+
+        let currentUser = JSON.parse(localStorage.getItem('anjiz_current_user')) || null;
+        let authTabMode = 'login';
+        let pendingAuthData = null;
+        const DEFAULT_OTP = '1234';
+
+        window.onload = function() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            if (currentUser) {
+                showMainApp();
+            } else {
+                showAuthScreen();
+            }
+        };
+
+        function saveData() {
+            localStorage.setItem('anjiz_users', JSON.stringify(users));
+            localStorage.setItem('anjiz_tasks', JSON.stringify(tasks));
+            localStorage.setItem('anjiz_completions', JSON.stringify(completions));
+            if (currentUser) {
+                localStorage.setItem('anjiz_current_user', JSON.stringify(currentUser));
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('liveClock').textContent = `${hours}:${minutes}`;
+
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('currentDateStr').textContent = now.toLocaleDateString('ar-SA', options);
+        }
+
+        function toggleMockupMode(isPhone) {
+            const container = document.getElementById('appContainer');
+            const btnPhone = document.getElementById('btnViewPhone');
+            const btnFull = document.getElementById('btnViewFull');
+            const notch = document.getElementById('phoneHeaderNav');
+
+            if (isPhone) {
+                container.className = 'phone-mockup flex flex-col transition-all duration-300';
+                notch.classList.remove('hidden');
+                btnPhone.className = 'px-2.5 py-1 rounded-full bg-emerald-600 text-white font-medium transition';
+                btnFull.className = 'px-2.5 py-1 rounded-full text-slate-300 hover:text-white transition';
+            } else {
+                container.className = 'w-full max-w-4xl h-screen rounded-none shadow-none flex flex-col transition-all duration-300 border-0 bg-slate-900';
+                notch.classList.add('hidden');
+                btnFull.className = 'px-2.5 py-1 rounded-full bg-emerald-600 text-white font-medium transition';
+                btnPhone.className = 'px-2.5 py-1 rounded-full text-slate-300 hover:text-white transition';
+            }
+        }
+
+        function setAuthTab(tab) {
+            authTabMode = tab;
+            const tLogin = document.getElementById('tabLogin');
+            const tRegister = document.getElementById('tabRegister');
+            const fieldNameGroup = document.getElementById('fieldNameGroup');
+
+            if (tab === 'register') {
+                tRegister.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white transition-all';
+                tLogin.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 transition-all';
+                fieldNameGroup.classList.remove('hidden');
+            } else {
+                tLogin.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white transition-all';
+                tRegister.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 transition-all';
+                fieldNameGroup.classList.add('hidden');
+            }
+        }
+
+        function handleSendOTP(e) {
+            e.preventDefault();
+            const phone = document.getElementById('authPhone').value.trim();
+            const name = document.getElementById('authName').value.trim();
+            const role = document.querySelector('input[name="authRole"]:checked').value;
+
+            if (!phone) return;
+
+            pendingAuthData = { phone, name, role, mode: authTabMode };
+
+            document.getElementById('displayTargetPhone').textContent = phone;
+            document.getElementById('stepPhoneForm').classList.add('hidden');
+            document.getElementById('stepOTPForm').classList.remove('hidden');
+
+            document.getElementById('authStepTitle').textContent = 'الخطوة 2: أدخل رمز التحقق';
+            document.getElementById('authStepBadge').textContent = '2 من 2';
+
+            clearOtpInputs();
+        }
+
+        function handleOtpInput(input, index) {
+            const inputs = document.querySelectorAll('.otp-input');
+            if (input.value.length === 1 && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        }
+
+        function handleOtpKeydown(e, index) {
+            const inputs = document.querySelectorAll('.otp-input');
+            if (e.key === 'Backspace' && !inputs[index].value && index > 0) {
+                inputs[index - 1].focus();
+            }
+        }
+
+        function clearOtpInputs() {
+            const inputs = document.querySelectorAll('.otp-input');
+            inputs.forEach(inp => inp.value = '');
+            document.getElementById('otpErrorMessage').classList.add('hidden');
+            if (inputs.length > 0) inputs[0].focus();
+        }
+
+        function handleVerifyOTP(e) {
+            e.preventDefault();
+            const inputs = document.querySelectorAll('.otp-input');
+            let enteredCode = '';
+            inputs.forEach(inp => enteredCode += inp.value);
+
+            if (enteredCode !== DEFAULT_OTP) {
+                document.getElementById('otpErrorMessage').classList.remove('hidden');
+                return;
+            }
+
+            const { phone, name, role, mode } = pendingAuthData;
+
+            if (mode === 'login') {
+                let existingUser = users.find(u => u.phone === phone);
+                if (!existingUser) {
+                    existingUser = {
+                        id: 'u_' + Date.now(),
+                        name: role === 'leader' ? 'القائد الجديد' : 'عضو جديد',
+                        phone: phone,
+                        role: role,
+                        points: 0
+                    };
+                    users.push(existingUser);
+                }
+                currentUser = existingUser;
+            } else {
+                let existingUser = users.find(u => u.phone === phone);
+                if (existingUser) {
+                    currentUser = existingUser;
+                } else {
+                    const newUser = {
+                        id: 'u_' + Date.now(),
+                        name: name || (role === 'leader' ? 'القائد' : 'عضو جديد'),
+                        phone: phone,
+                        role: role,
+                        points: 0
+                    };
+                    users.push(newUser);
+                    currentUser = newUser;
+                }
+            }
+
+            saveData();
+            showMainApp();
+        }
+
+        function backToPhoneStep() {
+            document.getElementById('stepOTPForm').classList.add('hidden');
+            document.getElementById('stepPhoneForm').classList.remove('hidden');
+            document.getElementById('authStepTitle').textContent = 'الخطوة 1: أدخل رقم الجوال';
+            document.getElementById('authStepBadge').textContent = '1 من 2';
+        }
+
+        function resendOTP() {
+            clearOtpInputs();
+            const btn = document.getElementById('btnResendOTP');
+            btn.textContent = 'تم الإرسال بنجاح!';
+            btn.classList.add('text-emerald-300');
+            setTimeout(() => {
+                btn.textContent = 'إعادة إرسال الرمز';
+                btn.classList.remove('text-emerald-300');
+            }, 3000);
+        }
+
+        function quickLogin(role) {
+            if (role === 'leader') {
+                currentUser = users.find(u => u.role === 'leader') || users[0];
+            } else {
+                currentUser = users.find(u => u.role === 'member') || users[1];
+            }
+            saveData();
+            showMainApp();
+        }
+
+        function logout() {
+            currentUser = null;
+            pendingAuthData = null;
+            localStorage.removeItem('anjiz_current_user');
+            document.getElementById('mainAppScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('hidden');
+            backToPhoneStep();
+        }
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const phone = document.getElementById('authPhone').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            const role = document.querySelector('input[name="authRole"]:checked').value;
+            const name = document.getElementById('authName').value.trim();
+
+            if (!phone || !password) return;
+
+            if (authTabMode === 'login') {
+                let existingUser = users.find(u => u.phone === phone);
+                if (!existingUser) {
+                    existingUser = {
+                        id: 'u_' + Date.now(),
+                        name: role === 'leader' ? 'القائد الجديد' : 'عضو جديد',
+                        phone: phone,
+                        role: role,
+                        points: 0
+                    };
+                    users.push(existingUser);
+                }
+                currentUser = existingUser;
+            } else {
+                let existingUser = users.find(u => u.phone === phone);
+                if (existingUser) {
+                    currentUser = existingUser;
+                } else {
+                    const newUser = {
+                        id: 'u_' + Date.now(),
+                        name: name || (role === 'leader' ? 'القائد' : 'عضو جديد'),
+                        phone: phone,
+                        role: role,
+                        points: 0
+                    };
+                    users.push(newUser);
+                    currentUser = newUser;
+                }
+            }
+
+            saveData();
+            showMainApp();
+        }
+
+        function quickLogin(role) {
+            if (role === 'leader') {
+                currentUser = users.find(u => u.role === 'leader') || users[0];
+            } else {
+                currentUser = users.find(u => u.role === 'member') || users[1];
+            }
+            saveData();
+            showMainApp();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('anjiz_current_user');
+            document.getElementById('mainAppScreen').classList.add('hidden');
+            document.getElementById('authScreen').classList.remove('hidden');
+        }
+
+        function showAuthScreen() {
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('mainAppScreen').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainAppScreen').classList.remove('hidden');
+
+            document.getElementById('headerUserName').textContent = currentUser.name;
+            document.getElementById('headerUserRole').textContent = currentUser.role === 'leader' ? 'قائد المجموعة' : 'عضو المجموعة';
+            document.getElementById('headerPoints').textContent = currentUser.points || 0;
+            document.getElementById('userAvatar').textContent = currentUser.name.charAt(0);
+
+            const leaderNavBadge = document.getElementById('leaderNavBadge');
+            if (currentUser.role === 'leader') {
+                leaderNavBadge.classList.remove('hidden');
+            } else {
+                leaderNavBadge.classList.add('hidden');
+            }
+
+            switchTab('tasks');
+        }
+
+        function switchTab(tabName) {
+            const tabTasks = document.getElementById('tabTasks');
+            const tabLeaderboard = document.getElementById('tabLeaderboard');
+            const tabLeader = document.getElementById('tabLeader');
+
+            const navTasks = document.getElementById('navTasks');
+            const navLeaderboard = document.getElementById('navLeaderboard');
+            const navLeader = document.getElementById('navLeader');
+
+            tabTasks.classList.add('hidden');
+            tabLeaderboard.classList.add('hidden');
+            tabLeader.classList.add('hidden');
+
+            [navTasks, navLeaderboard, navLeader].forEach(nav => {
+                nav.className = 'flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition';
+            });
+
+            if (tabName === 'tasks') {
+                tabTasks.classList.remove('hidden');
+                navTasks.className = 'flex flex-col items-center gap-1 text-emerald-400 font-bold transition';
+                renderTasksTab();
+            } else if (tabName === 'leaderboard') {
+                tabLeaderboard.classList.remove('hidden');
+                navLeaderboard.className = 'flex flex-col items-center gap-1 text-amber-400 font-bold transition';
+                renderLeaderboardTab();
+            } else if (tabName === 'leader') {
+                tabLeader.classList.remove('hidden');
+                navLeader.className = 'flex flex-col items-center gap-1 text-teal-400 font-bold transition relative';
+                renderLeaderTab();
+            }
+        }
+
+        function renderTasksTab() {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+
+            const userCompletions = completions[currentUser.id] || [];
+            const eligibleTasks = tasks.filter(t => t.assignee === 'all' || t.assignee === currentUser.id);
+
+            let completedCount = 0;
+
+            eligibleTasks.forEach(task => {
+                const isDone = userCompletions.includes(task.id);
+                if (isDone) completedCount++;
+
+                const card = document.createElement('div');
+                card.className = `p-3.5 rounded-2xl glass-card transition-all duration-300 flex items-center justify-between border ${
+                    isDone ? 'border-emerald-500/40 bg-emerald-950/20' : 'border-slate-800 hover:border-slate-700'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleTaskCompletion('${task.id}')" class="w-7 h-7 rounded-xl flex items-center justify-center transition ${
+                            isDone ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-900/50' : 'border border-slate-700 text-transparent hover:border-emerald-500'
+                        }">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </button>
+                        <div class="text-right">
+                            <h4 class="text-xs font-bold ${isDone ? 'line-through text-slate-400' : 'text-slate-100'}">${task.title}</h4>
+                            <span class="text-[10px] text-amber-400/90 font-medium">
+                                <i class="fa-solid fa-star text-[9px] ml-0.5"></i> +${task.points} نقطة
+                            </span>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-xl bg-slate-800/60 flex items-center justify-center text-slate-400 text-xs">
+                        <i class="fa-solid ${task.icon || 'fa-check-double'} text-emerald-400/80"></i>
+                    </div>
+                `;
+                taskList.appendChild(card);
+            });
+
+            const total = eligibleTasks.length;
+            const percentage = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+            document.getElementById('dailyProgressBar').style.width = `${percentage}%`;
+            document.getElementById('taskProgressSummary').textContent = `إنجازك اليوم: ${completedCount} من ${total} مهام (${percentage}%)`;
+        }
+
+        function toggleTaskCompletion(taskId) {
+            if (!completions[currentUser.id]) {
+                completions[currentUser.id] = [];
+            }
+
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            const userCompleted = completions[currentUser.id].includes(taskId);
+
+            if (userCompleted) {
+                completions[currentUser.id] = completions[currentUser.id].filter(id => id !== taskId);
+                currentUser.points = Math.max(0, (currentUser.points || 0) - task.points);
+            } else {
+                completions[currentUser.id].push(taskId);
+                currentUser.points = (currentUser.points || 0) + task.points;
+
+                confetti({
+                    particleCount: 40,
+                    spread: 60,
+                    origin: { y: 0.8 },
+                    colors: ['#10b981', '#f59e0b', '#3b82f6']
+                });
+            }
+
+            if (userIndex !== -1) {
+                users[userIndex].points = currentUser.points;
+            }
+
+            saveData();
+            document.getElementById('headerPoints').textContent = currentUser.points;
+            renderTasksTab();
+        }
+
+        function renderLeaderboardTab() {
+            const sortedUsers = [...users].sort((a, b) => (b.points || 0) - (a.points || 0));
+
+            const podiumContainer = document.getElementById('podiumContainer');
+            podiumContainer.innerHTML = '';
+
+            const top3 = [sortedUsers[1], sortedUsers[0], sortedUsers[2]];
+
+            top3.forEach((u, idx) => {
+                if (!u) return;
+                const realRank = u === sortedUsers[0] ? 1 : (u === sortedUsers[1] ? 2 : 3);
+                
+                let heightClass = realRank === 1 ? 'h-24 bg-gradient-to-t from-amber-500/20 to-amber-500/5 border-amber-500/40' : 
+                                 (realRank === 2 ? 'h-20 bg-gradient-to-t from-slate-400/20 to-slate-400/5 border-slate-400/40' : 
+                                                  'h-16 bg-gradient-to-t from-amber-800/20 to-amber-800/5 border-amber-800/40');
+                
+                let iconColor = realRank === 1 ? 'text-amber-400' : (realRank === 2 ? 'text-slate-300' : 'text-amber-700');
+
+                const pod = document.createElement('div');
+                pod.className = 'flex flex-col items-center flex-1 max-w-[100px]';
+                pod.innerHTML = `
+                    <div class="relative mb-1">
+                        <div class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs text-white border border-slate-700">
+                            ${u.name.charAt(0)}
+                        </div>
+                        <i class="fa-solid fa-crown absolute -top-2 -right-1 text-xs ${iconColor}"></i>
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-200 truncate w-full text-center">${u.name.split(' ')[0]}</span>
+                    <span class="text-[9px] text-amber-400 font-bold mb-1">${u.points || 0} ن</span>
+                    <div class="w-full ${heightClass} border rounded-t-xl flex items-center justify-center font-black text-xs text-slate-300">
+                        ${realRank}
+                    </div>
+                `;
+                podiumContainer.appendChild(pod);
+            });
+
+            const myRankIndex = sortedUsers.findIndex(u => u.id === currentUser.id);
+            const myRank = myRankIndex !== -1 ? myRankIndex + 1 : '--';
+            document.getElementById('userRankBadge').textContent = `#${myRank}`;
+
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+
+            sortedUsers.forEach((u, index) => {
+                const isMe = u.id === currentUser.id;
+                const row = document.createElement('div');
+                row.className = `p-3 rounded-xl glass-card flex items-center justify-between border ${
+                    isMe ? 'border-amber-500/50 bg-amber-950/20' : 'border-slate-800'
+                }`;
+
+                row.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 text-center text-xs font-black ${index === 0 ? 'text-amber-400' : (index === 1 ? 'text-slate-300' : (index === 2 ? 'text-amber-600' : 'text-slate-500'))}">
+                            #${index + 1}
+                        </span>
+                        <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-300 border border-slate-700">
+                            ${u.name.charAt(0)}
+                        </div>
+                        <div class="text-right">
+                            <h4 class="text-xs font-bold ${isMe ? 'text-amber-300' : 'text-slate-200'}">${u.name} ${isMe ? '(أنت)' : ''}</h4>
+                            <span class="text-[10px] text-slate-400">${u.role === 'leader' ? 'قائد المجموعة' : 'عضو'}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
+                        <i class="fa-solid fa-star text-amber-400 text-xs"></i>
+                        <span class="text-xs font-bold text-amber-300">${u.points || 0}</span>
+                    </div>
+                `;
+                leaderboardList.appendChild(row);
+            });
+        }
+
+        function setLeaderSubTab(subTab) {
+            const secMembers = document.getElementById('leaderMembersSection');
+            const secTasks = document.getElementById('leaderTasksSection');
+            const btnMembers = document.getElementById('subTabMembers');
+            const btnTasks = document.getElementById('subTabTasks');
+
+            if (subTab === 'members') {
+                secMembers.classList.remove('hidden');
+                secTasks.classList.add('hidden');
+                btnMembers.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white transition';
+                btnTasks.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 transition';
+            } else {
+                secMembers.classList.add('hidden');
+                secTasks.classList.remove('hidden');
+                btnTasks.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white transition';
+                btnMembers.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 transition';
+            }
+        }
+
+        function renderLeaderTab() {
+            document.getElementById('membersCount').textContent = users.length;
+
+            const membersList = document.getElementById('leaderMembersList');
+            membersList.innerHTML = '';
+
+            users.forEach(u => {
+                const card = document.createElement('div');
+                card.className = 'p-3 rounded-xl glass-card border border-slate-800 flex items-center justify-between';
+                card.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs text-white border border-slate-700">
+                            ${u.name.charAt(0)}
+                        </div>
+                        <div class="text-right">
+                            <h4 class="text-xs font-bold text-white">${u.name}</h4>
+                            <span class="text-[10px] text-slate-400" dir="ltr">${u.phone}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openAdjustPointsModal('${u.id}')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-[11px] font-bold border border-slate-700 flex items-center gap-1">
+                            <i class="fa-solid fa-star text-[10px]"></i> ${u.points || 0}
+                        </button>
+                        ${u.id !== currentUser.id ? `
+                            <button onclick="removeMember('${u.id}')" title="حذف العضو" class="w-7 h-7 rounded-lg bg-rose-950/50 hover:bg-rose-900 border border-rose-800/40 text-rose-400 flex items-center justify-center transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                membersList.appendChild(card);
+            });
+
+            const tasksList = document.getElementById('leaderTasksList');
+            tasksList.innerHTML = '';
+
+            tasks.forEach(t => {
+                const card = document.createElement('div');
+                card.className = 'p-3 rounded-xl glass-card border border-slate-800 flex items-center justify-between';
+                
+                let assigneeName = 'الجميع';
+                if (t.assignee !== 'all') {
+                    const assignedUser = users.find(u => u.id === t.assignee);
+                    assigneeName = assignedUser ? assignedUser.name : 'مخصص';
+                }
+
+                card.innerHTML = `
+                    <div class="text-right">
+                        <h4 class="text-xs font-bold text-slate-200">${t.title}</h4>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-[10px] text-amber-400 font-semibold">${t.points} نقطة</span>
+                            <span class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded border border-slate-700">مخصصة لـ: ${assigneeName}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="openEditTaskModal('${t.id}')" class="w-7 h-7 rounded-lg bg-amber-950/40 border border-amber-800/40 text-amber-400 flex items-center justify-center hover:bg-amber-900/40">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="deleteTask('${t.id}')" class="w-7 h-7 rounded-lg bg-rose-950/40 border border-rose-800/40 text-rose-400 flex items-center justify-center hover:bg-rose-900/40">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                tasksList.appendChild(card);
+            });
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function openAddTaskModal() {
+            const select = document.getElementById('newTaskAssignee');
+            select.innerHTML = '<option value="all">جميع أعضاء المجموعة</option>';
+            users.forEach(u => {
+                select.innerHTML += `<option value="${u.id}">${u.name}</option>`;
+            });
+            openModal('modalAddTask');
+        }
+
+        function handleCreateTask(e) {
+            e.preventDefault();
+            const title = document.getElementById('newTas
